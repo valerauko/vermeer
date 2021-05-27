@@ -1,0 +1,37 @@
+(ns vermeer.app
+  (:require [vermeer.sup :as sup]))
+
+(defn ->list [s]
+  (clj_rt/to_list.1 s))
+
+(defn ->proplist [m]
+  (->list (map into-tuple m)))
+
+(def routes {:_ [["/" :vermeer.handlers.root nil]]})
+
+(defn- route->cowboy [[host handlers]]
+  #erl[host (->list (map into-tuple handlers))])
+
+(defn start-cowboy []
+  (let [routes (->list (map route->cowboy routes))
+        dispatch (cowboy_router/compile routes)
+        port (->proplist {:port 8080})
+        opts #erl{:env #erl{:dispatch dispatch}}]
+    (println "Starting Cowboy server on port 8080")
+    ;; starts a Cowboy listener named :vermeer.listener
+    (#erl cowboy/start_clear :vermeer.listener port opts)))
+
+;; `application` behavior lifecycle callbacks
+;; http://erlang.org/doc/man/application.html
+
+(defn stop
+  "http://erlang.org/doc/apps/kernel/application.html#Module:stop-1"
+  [state]
+  state)
+
+(defn start
+  "http://erlang.org/doc/apps/kernel/application.html#Module:start-2"
+  [type args]
+  (start-cowboy)
+  (sup/start-link)
+  #erl[:ok (erlang/self)])

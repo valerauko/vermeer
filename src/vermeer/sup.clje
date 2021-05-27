@@ -1,0 +1,15 @@
+(ns vermeer.sup)
+
+(defn start-link
+  "https://erlang.org/doc/man/supervisor.html#start_link-3"
+  []
+  (supervisor/start_link #erl[:local :vermeer.sup]
+                         :vermeer.sup
+                         #erl()))
+
+(defn init [args]
+  (let [sup-flags   #erl{:strategy :one_for_one
+                         :intensity 1
+                         :period 5}
+        child-specs #erl()]
+    #erl[:ok #erl[sup-flags child-specs]]))
